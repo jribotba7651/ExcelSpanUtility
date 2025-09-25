@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SAP S/4HANA Migration Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+.header { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 40px; margin-bottom: 30px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); }
+.header h1 { color: #2c3e50; font-size: 2.5rem; margin-bottom: 8px; }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px; }
+@media (min-width: 1400px) { .metrics-grid { grid-template-columns: repeat(5, 1fr); } }
+.metric-card { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 30px; box-shadow: 0 12px 40px rgba(0,0,0,0.1); text-align: center; }
+.metric-value { font-size: 3rem; font-weight: 700; color: #2c3e50; margin: 15px 0; }
+.metric-card.baseline { background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 240, 255, 0.95)); }
+.chart-section { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
+.chart-card { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 30px; }
+.moc-section { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 30px; margin-bottom: 30px; }
+.moc-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; padding: 20px; background: linear-gradient(135deg, #667eea15, #764ba215); border-radius: 12px; margin-bottom: 25px; }
+.moc-summary-item { text-align: center; padding: 15px; background: white; border-radius: 10px; }
+.moc-summary-value { font-size: 2rem; font-weight: 700; color: #2c3e50; }
+.moc-summary-label { font-size: 0.85rem; color: #666; text-transform: uppercase; }
+.moc-container { max-height: 600px; overflow-y: auto; }
+.moc-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; margin-bottom: 15px; background: rgba(248, 249, 250, 0.8); border-radius: 15px; border-left: 5px solid #3498db; }
+.moc-item.complete { border-left-color: #2ecc71; }
+.moc-item.in-progress { border-left-color: #f39c12; }
+.moc-item.pending { border-left-color: #e74c3c; }
+.moc-item.critical { animation: pulse 2s infinite; }
+.moc-header { display: flex; align-items: center; gap: 15px; margin-bottom: 8px; }
+.moc-id { font-weight: 600; color: #2c3e50; font-size: 1.1rem; }
+.moc-priority { padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+.priority-high { background: #e74c3c; color: white; }
+.priority-medium { background: #f39c12; color: white; }
+.priority-low { background: #95a5a6; color: white; }
+.moc-desc { color: #666; font-size: 0.95rem; margin-bottom: 8px; }
+.moc-stats { font-size: 0.85rem; color: #7f8c8d; }
+.moc-progress-section { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 180px; }
+.moc-percentage { font-size: 1.8rem; font-weight: 700; }
+.moc-percentage.high { color: #27ae60; }
+.moc-percentage.medium { color: #f39c12; }
+.moc-percentage.low { color: #e74c3c; }
+.moc-progress-bar { width: 150px; height: 10px; background: #ecf0f1; border-radius: 5px; overflow: hidden; }
+.moc-progress-fill { height: 100%; border-radius: 5px; transition: width 2s ease-out; }
+.moc-progress-fill.high { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+.moc-progress-fill.medium { background: linear-gradient(90deg, #f39c12, #f1c40f); }
+.moc-progress-fill.low { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+.moc-status { font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; font-weight: 600; text-transform: uppercase; }
+.moc-status.complete { background: #2ecc71; color: white; }
+.moc-status.in-progress { background: #f39c12; color: white; }
+.moc-status.pending { background: #e74c3c; color: white; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>SAP S/4HANA Migration Dashboard</h1>
+    <p><strong>Generated:</strong> 2025-09-25 12:29:03 | <strong>Site:</strong> Irvine, CA | <strong>Source:</strong> SharePoint</p>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <h3>Total Material Records</h3>
+      <div class="metric-value">1288</div>
+      <p>Current system records</p>
+    </div>
+    <div class="metric-card">
+      <h3>Target Records</h3>
+      <div class="metric-value">1134</div>
+      <p>Post-cleanup target</p>
+    </div>
+    <div class="metric-card">
+      <h3>Pending Cleanup</h3>
+      <div class="metric-value">154</div>
+      <p>Items to deactivate</p>
+    </div>
+    <div class="metric-card">
+      <h3>Data Quality Score</h3>
+      <div class="metric-value">88.0%</div>
+      <p>SAP readiness level</p>
+    </div>
+    <div class="metric-card baseline">
+      <h3>Baseline Records</h3>
+      <div class="metric-value">2175</div>
+      <p>At project start</p>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-card">
+      <h3>Material Class Breakdown</h3>
+      <canvas id="materialChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Progress Overview</h3>
+      <canvas id="progressChart"></canvas>
+    </div>
+  </div>
+
+  <div class="moc-section">
+    <h2 style="text-align:center; margin-bottom: 25px;">Active Management of Changes (MOCs)</h2>
+    <div class="moc-summary">
+      <div class="moc-summary-item"><div class="moc-summary-value">17</div><div class="moc-summary-label">Total MOCs</div></div>
+      <div class="moc-summary-item"><div class="moc-summary-value">84.9%</div><div class="moc-summary-label">Avg Progress</div></div>
+      <div class="moc-summary-item"><div class="moc-summary-value">4</div><div class="moc-summary-label">Completed</div></div>
+      <div class="moc-summary-item"><div class="moc-summary-value">13</div><div class="moc-summary-label">In Progress</div></div>
+      <div class="moc-summary-item"><div class="moc-summary-value">0</div><div class="moc-summary-label">Not Started</div></div>
+      <div class="moc-summary-item"><div class="moc-summary-value">1591</div><div class="moc-summary-label">Total Items</div></div>
+    </div>
+    <div class="moc-container">
+      
+        <div class="moc-item complete ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.24.012</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Op Items</div>
+                <div class="moc-stats">
+                    📦 <strong>11</strong> items |
+                    ✅ <strong>11</strong> done |
+                    📝 nan
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">100.0%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 100.0%"></div>
+                </div>
+                <div class="moc-status complete">Complete</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.24.121</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Bulk</div>
+                <div class="moc-stats">
+                    📦 <strong>23</strong> items |
+                    ✅ <strong>21</strong> done |
+                    📝 BOM, QOH
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">91.3%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 91.30434782608695%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.048</div>
+                    <span class="moc-priority priority-high">HIGH PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Fg, Bulk, Connected Components</div>
+                <div class="moc-stats">
+                    📦 <strong>108</strong> items |
+                    ✅ <strong>72</strong> done |
+                    📝 BOM, QOH, approvals
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage medium">66.7%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill medium" style="width: 66.66666666666666%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.049</div>
+                    <span class="moc-priority priority-high">HIGH PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Components</div>
+                <div class="moc-stats">
+                    📦 <strong>353</strong> items |
+                    ✅ <strong>347</strong> done |
+                    📝 BOM
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">98.3%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 98.30028328611898%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item complete ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.051</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Op Items</div>
+                <div class="moc-stats">
+                    📦 <strong>2</strong> items |
+                    ✅ <strong>2</strong> done |
+                    📝 nan
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">100.0%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 100.0%"></div>
+                </div>
+                <div class="moc-status complete">Complete</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.060</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Components</div>
+                <div class="moc-stats">
+                    📦 <strong>43</strong> items |
+                    ✅ <strong>37</strong> done |
+                    📝 BOM
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">86.0%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 86.04651162790698%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item complete ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.072</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Op Items</div>
+                <div class="moc-stats">
+                    📦 <strong>10</strong> items |
+                    ✅ <strong>10</strong> done |
+                    📝 nan
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">100.0%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 100.0%"></div>
+                </div>
+                <div class="moc-status complete">Complete</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.116</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">2024 Components</div>
+                <div class="moc-stats">
+                    📦 <strong>47</strong> items |
+                    ✅ <strong>34</strong> done |
+                    📝 in progress
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage medium">72.3%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill medium" style="width: 72.3404255319149%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.117</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">2024 Raw Materials</div>
+                <div class="moc-stats">
+                    📦 <strong>5</strong> items |
+                    ✅ <strong>3</strong> done |
+                    📝 in progress
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage medium">60.0%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill medium" style="width: 60.0%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.118</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">2024 Bulk</div>
+                <div class="moc-stats">
+                    📦 <strong>10</strong> items |
+                    ✅ <strong>8</strong> done |
+                    📝 in progress
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">80.0%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 80.0%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.119</div>
+                    <span class="moc-priority priority-medium">MEDIUM PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Older Components</div>
+                <div class="moc-stats">
+                    📦 <strong>69</strong> items |
+                    ✅ <strong>63</strong> done |
+                    📝 in progress
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">91.3%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 91.30434782608695%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.121</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Older Raw Materials</div>
+                <div class="moc-stats">
+                    📦 <strong>4</strong> items |
+                    ✅ <strong>3</strong> done |
+                    📝 in progress
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">75.0%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 75.0%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.122</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Older Bulk</div>
+                <div class="moc-stats">
+                    📦 <strong>19</strong> items |
+                    ✅ <strong>16</strong> done |
+                    📝 in progress
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">84.2%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 84.21052631578947%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.124</div>
+                    <span class="moc-priority priority-high">HIGH PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Fg Sample Demo + Components</div>
+                <div class="moc-stats">
+                    📦 <strong>447</strong> items |
+                    ✅ <strong>345</strong> done |
+                    📝 in progress
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">77.2%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 77.18120805369128%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.142</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Op Items</div>
+                <div class="moc-stats">
+                    📦 <strong>30</strong> items |
+                    ✅ <strong>23</strong> done |
+                    📝 in progress
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">76.7%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 76.66666666666667%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+        <div class="moc-item complete ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">MC Action Item</div>
+                    <span class="moc-priority priority-high">HIGH PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Old Items No Moc</div>
+                <div class="moc-stats">
+                    📦 <strong>364</strong> items |
+                    ✅ <strong>364</strong> done |
+                    📝 nan
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">100.0%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 100.0%"></div>
+                </div>
+                <div class="moc-status complete">Complete</div>
+            </div>
+        </div>
+        <div class="moc-item in-progress ">
+            <div class="moc-info">
+                <div class="moc-header">
+                    <div class="moc-id">NW.MOC.25.154</div>
+                    <span class="moc-priority priority-low">LOW PRIORITY</span>
+                    
+                </div>
+                <div class="moc-desc">Bulk</div>
+                <div class="moc-stats">
+                    📦 <strong>46</strong> items |
+                    ✅ <strong>39</strong> done |
+                    📝 in progress
+                </div>
+            </div>
+            <div class="moc-progress-section">
+                <div class="moc-percentage high">84.8%</div>
+                <div class="moc-progress-bar">
+                    <div class="moc-progress-fill high" style="width: 84.78260869565217%"></div>
+                </div>
+                <div class="moc-status in-progress">In Progress</div>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<script>
+new Chart(document.getElementById("materialChart").getContext("2d"), {
+  type: "bar",
+  data: {
+    labels: ["Raw Material", "Bulk", "Component", "Finished Good", "Sample/Demo", "Other"],
+    datasets: [
+      {
+        label: "Current",
+        data: [266, 109, 546, 298, 43, 26],
+        backgroundColor: "rgba(52,152,219,0.8)"
+      },
+      {
+        label: "Target",
+        data: [263, 92, 437, 284, 32, 26],
+        backgroundColor: "rgba(46,204,113,0.8)"
+      }
+    ]
+  },
+  options: { responsive: true }
+});
+
+new Chart(document.getElementById("progressChart").getContext("2d"), {
+  type: "doughnut",
+  data: {
+    labels: ["Completed", "Pending"],
+    datasets: [{
+      data: [1134, 154],
+      backgroundColor: ["rgba(46,204,113,0.8)", "rgba(231,76,60,0.8)"]
+    }]
+  },
+  options: { responsive: true, cutout: "65%" }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+## Visual Studio files
+bin/
+obj/
+*.user
+*.suo
+*.sdf
+*.Cache
+project.lock.json
+.vs/
+
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Bb]uild/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+## NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+## Backup files
+*.bak
+*.backup
+*~
+
+## User profile stuff
+../*
+!../ExcelSpanUtility/

@@ -1,0 +1,37 @@
+============================================
+     EXCEL MULTI-MONITOR UTILITY
+        INSTRUCCIONES SIMPLES
+============================================
+
+PASO 1: COMPILAR
+----------------
+Haz doble click en: COMPILAR.bat
+Espera a que termine (1-2 minutos)
+Cuando pregunte, presiona Y para ejecutar
+
+PASO 2: USAR LA APLICACION
+---------------------------
+1. Abre Excel con un archivo
+2. Ejecuta la aplicacion (EJECUTAR_DIRECTO.bat)
+3. Click en "Refresh" para ver las ventanas de Excel
+4. Selecciona una ventana de Excel de la lista
+5. Selecciona los monitores donde quieres expandirla
+6. Click en "Span Selected Monitors"
+
+ARCHIVOS IMPORTANTES:
+----------------------
+COMPILAR.bat         = Compila la aplicacion (hazlo 1 vez)
+EJECUTAR_DIRECTO.bat = Abre la aplicacion (despues de compilar)
+
+NOTAS:
+------
+- Solo necesitas compilar 1 vez
+- Despues puedes usar EJECUTAR_DIRECTO.bat siempre
+- Necesitas tener Excel abierto para que funcione
+- Necesitas 2 o mas monitores conectados
+
+SI HAY ERRORES:
+---------------
+1. Verifica que tengas internet
+2. Vuelve a ejecutar COMPILAR.bat
+3. Asegurate que Excel este abierto con un archivo
